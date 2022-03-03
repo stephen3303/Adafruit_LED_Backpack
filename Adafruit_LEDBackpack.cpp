@@ -151,6 +151,106 @@ static const PROGMEM uint8_t sevensegfonttable[] = {
     0b00000000, // del
 };
 
+static const PROGMEM uint8_t sevensegfonttable2[] = {
+
+    0b00000000, // (space)
+    0b10000110, // !
+    0b00100010, // "
+    0b01111110, // #
+    0b01101101, // $
+    0b11010010, // %
+    0b01000110, // &
+    0b00100000, // '
+    0b00101001, // (
+    0b00001011, // )
+    0b00100001, // *
+    0b01110000, // +
+    0b00010000, // ,
+    0b01000000, // -
+    0b10000000, // .
+    0b01010010, // /
+    0b00111111, // 0
+    0b00110000, // 1
+    0b01011011, // 2
+    0b01111001, // 3
+    0b01110100, // 4
+    0b01101101, // 5
+    0b01101111, // 6
+    0b00111000, // 7
+    0b01111111, // 8
+    0b01111100, // 9
+    0b00001001, // :
+    0b00001101, // ;
+    0b01100001, // <
+    0b01001000, // =
+    0b01000011, // >
+    0b11010011, // ?
+    0b01011111, // @
+    0b01110111, // A
+    0b01111100, // B
+    0b00111001, // C
+    0b01011110, // D
+    0b01111001, // E
+    0b01110001, // F
+    0b00111101, // G
+    0b01110110, // H
+    0b00110000, // I
+    0b00011110, // J
+    0b01110101, // K
+    0b00111000, // L
+    0b00010101, // M
+    0b00110111, // N
+    0b00111111, // O
+    0b01110011, // P
+    0b01101011, // Q
+    0b00110011, // R
+    0b01101101, // S
+    0b01111000, // T
+    0b00111110, // U
+    0b00111110, // V
+    0b00101010, // W
+    0b01110110, // X
+    0b01101110, // Y
+    0b01011011, // Z
+    0b00111001, // [
+    0b01100100, //
+    0b00001111, // ]
+    0b00100011, // ^
+    0b00001000, // _
+    0b00000010, // `
+    0b01011111, // a
+    0b01111100, // b
+    0b01011000, // c
+    0b01011110, // d
+    0b01111011, // e
+    0b01110001, // f
+    0b01101111, // g
+    0b01110100, // h
+    0b00010000, // i
+    0b00001100, // j
+    0b01110101, // k
+    0b00110000, // l
+    0b00010100, // m
+    0b01010100, // n
+    0b01011100, // o
+    0b01110011, // p
+    0b01100111, // q
+    0b01010000, // r
+    0b01101101, // s
+    0b01111000, // t
+    0b00011100, // u
+    0b00011100, // v
+    0b00010100, // w
+    0b01110110, // x
+    0b01101110, // y
+    0b01011011, // z
+    0b01000110, // {
+    0b00110000, // |
+    0b01110000, // }
+    0b00000001, // ~
+    0b00000000, // del
+};
+
 static const PROGMEM uint16_t alphafonttable[] = {
 
     0b0000000000000001, 0b0000000000000010, 0b0000000000000100,
@@ -632,7 +732,7 @@ void Adafruit_7segment::println(double n, int digits) {
 
 void Adafruit_7segment::print(double n, int digits) { printFloat(n, digits); }
 
-size_t Adafruit_7segment::write(char c) {
+size_t Adafruit_7segment::write(char c, bool flip) {
 
   uint8_t r = 0;
 
@@ -642,7 +742,7 @@ size_t Adafruit_7segment::write(char c) {
     position = 0;
 
   if ((c >= ' ') && (c <= 127)) {
-    writeDigitAscii(position, c);
+    writeDigitAscii(position, c, flip);
     r = 1;
   }
 
@@ -692,42 +792,47 @@ void Adafruit_7segment::writeColon(void) {
   i2c_dev->write(buffer, 3);
 }
 
-void Adafruit_7segment::writeDigitNum(uint8_t d, uint8_t num, bool dot) {
+void Adafruit_7segment::writeDigitNum(uint8_t d, uint8_t num, bool dot, bool flip) {
   if (d > 4 || num > 15)
     return;
 
   if (num >= 10) { // Hex characters
     switch (num) {
     case 10:
-      writeDigitAscii(d, 'a', dot);
+      writeDigitAscii(d, 'a', dot, 0);
       break;
     case 11:
-      writeDigitAscii(d, 'B', dot);
+      writeDigitAscii(d, 'B', dot, 0);
       break;
     case 12:
-      writeDigitAscii(d, 'C', dot);
+      writeDigitAscii(d, 'C', dot, 0);
       break;
     case 13:
-      writeDigitAscii(d, 'd', dot);
+      writeDigitAscii(d, 'd', dot, 0);
       break;
     case 14:
-      writeDigitAscii(d, 'E', dot);
+      writeDigitAscii(d, 'E', dot, 0);
       break;
     case 15:
-      writeDigitAscii(d, 'F', dot);
+      writeDigitAscii(d, 'F', dot, 0);
       break;
     }
   }
 
   else
-    writeDigitAscii(d, num + 48, dot); // use ASCII offset
+    writeDigitAscii(d, num + 48, dot, flip); // use ASCII offset
 }
 
-void Adafruit_7segment::writeDigitAscii(uint8_t d, uint8_t c, bool dot) {
+void Adafruit_7segment::writeDigitAscii(uint8_t d, uint8_t c, bool dot, bool flip) {
+  uint8_t font = NULL;
+
   if (d > 4)
     return;
 
-  uint8_t font = pgm_read_byte(sevensegfonttable + c - 32);
+  if (flip)
+    font = pgm_read_byte(sevensegfonttable2 + c - 32);
+  else
+    font = pgm_read_byte(sevensegfonttable + c - 32);
 
   writeDigitRaw(d, font | (dot << 7));
 }

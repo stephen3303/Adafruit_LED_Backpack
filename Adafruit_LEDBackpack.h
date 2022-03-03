@@ -232,6 +232,14 @@ public:
     @param   size   Number of characters to write
     @return  Number of characters written
   */
+   size_t write(char c, bool flip);
+
+  /*!
+    @brief   Write characters from buffer to display.
+    @param   buffer Character array to write
+    @param   size   Number of characters to write
+    @return  Number of characters written
+  */
   size_t write(const char *buffer, size_t size);
 
   /*!
@@ -373,7 +381,7 @@ public:
     @param  num  Numeric (not ASCII) value.
     @param  dot  If true, light corresponding decimal.
   */
-  void writeDigitNum(uint8_t x, uint8_t num, bool dot = false);
+  void writeDigitNum(uint8_t x, uint8_t num, bool dot = false, bool flip = false);
 
   /*!
     @brief  Set specific digit # to a character value.
@@ -381,7 +389,7 @@ public:
     @param  c    Character (ASCII).
     @param  dot  If true, light corresponding decimal.
   */
-  void writeDigitAscii(uint8_t x, uint8_t c, bool dot = false);
+  void writeDigitAscii(uint8_t x, uint8_t c, bool dot = false, bool flip = false);
 
   /*!
     @brief  Set or unset colon segment.
